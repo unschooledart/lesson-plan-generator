@@ -34,151 +34,110 @@
                 <button class="tab-link" onclick="openTab(event, 'Assessment')">4. Assessment & Differentiation</button>
                 <button class="tab-link" onclick="openTab(event, 'Connections')">5. Connections & Resources</button>
             </div>
-
-            <div id="Setup" class="tab-content" style="display: block;">
-                <h2>Lesson Setup</h2>
-                <div class="form-grid">
-                    <div class="form-group full-width">
-                        <label for="lessonTitle">Lesson Title</label>
-                        <input type="text" id="lessonTitle" name="lessonTitle" placeholder="e.g., Exploring Surrealism with Automatic Drawing">
-                    </div>
-                    <div class="form-group">
-                        <label for="teacherName">Teacher's Name</label>
-                        <input type="text" id="teacherName" name="teacherName" placeholder="Enter your name">
-                    </div>
-                    <div class="form-group">
-                        <label for="weekDate">Week / Date(s)</label>
-                        <input type="text" id="weekDate" name="weekDate" placeholder="e.g., Week of Sept. 5th">
-                    </div>
-                    <div class="form-group">
-                        <label for="gradeLevelSelect">Grade Level</label>
-                        <select id="gradeLevelSelect" name="gradeLevelSelect"></select>
-                    </div>
-                    <div class="form-group">
-                        <label for="disciplineSelect">Discipline</label>
-                        <select id="disciplineSelect" name="disciplineSelect"></select>
+            
+            <form id="lessonPlanForm">
+                <div id="Setup" class="tab-content" style="display: block;">
+                    <h2>Lesson Setup</h2>
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label for="lessonTitle">Lesson Title</label>
+                            <input type="text" id="lessonTitle" name="lessonTitle" placeholder="e.g., Exploring Surrealism with Automatic Drawing">
+                        </div>
+                        <div class="form-group">
+                            <label for="teacherName">Teacher's Name</label>
+                            <input type="text" id="teacherName" name="teacherName" placeholder="Enter your name">
+                        </div>
+                        <div class="form-group">
+                            <label for="weekDate">Week / Date(s)</label>
+                            <input type="text" id="weekDate" name="weekDate" placeholder="e.g., Week of Sept. 5th">
+                        </div>
+                        <div class="form-group">
+                            <label for="gradeLevelSelect">Grade Level</label>
+                            <select id="gradeLevelSelect" name="gradeLevelSelect"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="disciplineSelect">Discipline</label>
+                            <select id="disciplineSelect" name="disciplineSelect"></select>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div id="CoreConcept" class="tab-content">
-                <h2>Core Concept & Standards</h2>
-                 <div class="form-grid">
-                    <div class="form-group full-width">
-                        <label for="bigIdea">The Big Idea</label>
-                        <textarea id="bigIdea" name="bigIdea" rows="3" placeholder="What is the main concept or enduring understanding?"></textarea>
+                <div id="CoreConcept" class="tab-content">
+                    <h2>Core Concept & Standards</h2>
+                     <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label for="bigIdea">The Big Idea</label>
+                            <textarea id="bigIdea" name="bigIdea" rows="3" placeholder="What is the main concept or enduring understanding?"></textarea>
+                        </div>
+                         <div class="form-group">
+                            <label for="artisticProcessSelect">Artistic Process</label>
+                            <select id="artisticProcessSelect" name="artisticProcessSelect"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="essentialQuestionBank">Essential Questions <button type="button" class="ai-button-inline">✨ Generate</button></label>
+                            <select id="essentialQuestionBank" name="essentialQuestionBank" multiple></select>
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="standardsSelect">National Core Arts Standards</label>
+                            <select id="standardsSelect" name="standardsSelect" multiple></select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="LessonContent" class="tab-content">
+                    <h2>Lesson Content & Activities</h2>
+                    <div class="form-group">
+                        <label for="lessonOverview">Lesson Overview <button type="button" class="ai-button-inline">✨ Generate</button></label>
+                        <textarea id="lessonOverview" name="lessonOverview" rows="6" placeholder="Describe the sequence of activities in the lesson."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="lessonObjectives">Lesson Objectives <button type="button" class="ai-button-inline">✨ Generate</button></label>
+                        <textarea id="lessonObjectives" name="lessonObjectives" rows="4" placeholder="What will students know or be able to do?"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="lessonHook">Lesson Hook / Opener <button type="button" class="ai-button-inline">✨ Generate</button></label>
+                        <textarea id="lessonHook" name="lessonHook" rows="2" placeholder="How will you capture students' attention at the start?"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="vocabularyTerms">Vocabulary Terms <button type="button" class="ai-button-inline">✨ Generate</button></label>
+                        <textarea id="vocabularyTerms" name="vocabularyTerms" rows="4" placeholder="Key terms and definitions will be generated here."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="materialsList">Materials List <button type="button" class="ai-button-inline">✨ Generate</button></label>
+                         <div class="slider-container">
+                            <label for="classSizeSlider">Class Size: <span id="classSizeValue">25</span></label>
+                            <input type="range" id="classSizeSlider" name="classSizeSlider" min="1" max="40" value="25">
+                        </div>
+                        <textarea id="materialsList" name="materialsList" rows="5" placeholder="A list of required art supplies will be generated here."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Studio Habits of Mind <button type="button" class="ai-button-inline" id="studioHabitsAiButton">✨ Identify Habits</button></label>
+                        <div id="studioHabitsChecklist" class="checklist-container">
+                            </div>
+                    </div>
+                </div>
+
+                <div id="Assessment" class="tab-content">
+                    <h2>Assessment & Differentiation</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="assessmentType">Assessment Type</label>
+                            <select id="assessmentType" name="assessmentType"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="specificAssessmentActivity">Specific Activity</label>
+                            <select id="specificAssessmentActivity" name="specificAssessmentActivity"></select>
+                        </div>
                     </div>
                      <div class="form-group">
-                        <label for="artisticProcessSelect">Artistic Process</label>
-                        <select id="artisticProcessSelect" name="artisticProcessSelect"></select>
+                        <label for="rubricCriteria">Rubric Criteria <button type="button" class="ai-button-inline">✨ Generate</button></label>
+                        <textarea id="rubricCriteria" name="rubricCriteria" rows="5" placeholder="Specific success criteria for assessment will be generated here."></textarea>
                     </div>
-                    <div class="form-group">
-                        <label for="essentialQuestionBank">Essential Questions <button class="ai-button-inline">✨ Generate</button></label>
-                        <select id="essentialQuestionBank" name="essentialQuestionBank" multiple></select>
-                    </div>
-                    <div class="form-group full-width">
-                        <label for="standardsSelect">National Core Arts Standards</label>
-                        <select id="standardsSelect" name="standardsSelect" multiple></select>
-                    </div>
-                </div>
-            </div>
-            
-            <div id="LessonContent" class="tab-content">
-                <h2>Lesson Content & Activities</h2>
-                <div class="form-group">
-                    <label for="lessonOverview">Lesson Overview <button class="ai-button-inline">✨ Generate</button></label>
-                    <textarea id="lessonOverview" name="lessonOverview" rows="6" placeholder="Describe the sequence of activities in the lesson."></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="lessonObjectives">Lesson Objectives <button class="ai-button-inline">✨ Generate</button></label>
-                    <textarea id="lessonObjectives" name="lessonObjectives" rows="4" placeholder="What will students know or be able to do?"></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="lessonHook">Lesson Hook / Opener <button class="ai-button-inline">✨ Generate</button></label>
-                    <textarea id="lessonHook" name="lessonHook" rows="2" placeholder="How will you capture students' attention at the start?"></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="vocabularyTerms">Vocabulary Terms <button class="ai-button-inline">✨ Generate</button></label>
-                    <textarea id="vocabularyTerms" name="vocabularyTerms" rows="4" placeholder="Key terms and definitions will be generated here."></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="materialsList">Materials List <button class="ai-button-inline">✨ Generate</button></label>
-                     <div class="slider-container">
-                        <label for="classSizeSlider">Class Size: <span id="classSizeValue">25</span></label>
-                        <input type="range" id="classSizeSlider" min="1" max="40" value="25">
-                    </div>
-                    <textarea id="materialsList" name="materialsList" rows="5" placeholder="A list of required art supplies will be generated here."></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Studio Habits of Mind <button class="ai-button-inline">✨ Identify Habits</button></label>
-                    <div id="studioHabitsChecklist" class="checklist-container">
-                        </div>
-                </div>
-            </div>
-
-            <div id="Assessment" class="tab-content">
-                <h2>Assessment & Differentiation</h2>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="assessmentType">Assessment Type</label>
-                        <select id="assessmentType" name="assessmentType"></select>
-                    </div>
-                    <div class="form-group">
-                        <label for="specificAssessmentActivity">Specific Activity</label>
-                        <select id="specificAssessmentActivity" name="specificAssessmentActivity"></select>
-                    </div>
-                </div>
-                 <div class="form-group">
-                    <label for="rubricCriteria">Rubric Criteria <button class="ai-button-inline">✨ Generate</button></label>
-                    <textarea id="rubricCriteria" name="rubricCriteria" rows="5" placeholder="Specific success criteria for assessment will be generated here."></textarea>
-                </div>
-                 <div class="form-group">
-                    <label>Differentiation & Accommodations</label>
-                    <p class="field-description">Select common accommodations and/or generate tailored ideas.</p>
-                    <div id="accommodationsChecklist" class="checklist-container">
-                        </div>
-                    <div class="ai-button-group">
-                        <button class="ai-button">✨ Generate Support Ideas</button>
-                        <button class="ai-button">✨ Generate Challenge Ideas</button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="Connections" class="tab-content">
-                <h2>Connections & Resources</h2>
-                <div class="form-group">
-                    <label>Art History & Cultural Connections <button class="ai-button-inline">✨ Generate</button></label>
-                    <textarea id="artHistoryConnections" name="artHistoryConnections" rows="5" placeholder="Relevant artists, movements, and cultures will be generated here."></textarea>
-                </div>
-                <div class="form-group">
-                    <label>YouTube Video Resources <button class="ai-button-inline">✨ Generate</button></label>
-                     <p class="field-description">Age-appropriate videos from approved channels will be suggested.</p>
-                    <textarea id="youtubeResources" name="youtubeResources" rows="5" placeholder="Links and descriptions of video resources will be generated here."></textarea>
-                </div>
-            </div>
-            
-            <div class="output-section">
-                <button id="generatePlanButton" class="button-main">Generate Lesson Plan</button>
-                <div id="lessonPlanOutput">
-                    </div>
-                <div id="actionButtons" class="hidden">
-                    <button id="downloadPdfButton">Download as PDF</button>
-                    <button id="printButton">Print</button>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <footer>
-        <div class="footer-content">
-            <h2>A Smarter Way to Plan Your Art Curriculum</h2>
-            <p>This AI-powered visual arts lesson plan generator is designed to be a creative partner for educators. By automating the tedious aspects of curriculum planning, you can focus more on what you love: teaching art. This tool helps you seamlessly integrate National Core Arts Standards, brainstorm age-appropriate projects, and build comprehensive learning experiences. Whether you're planning for elementary, middle, or high school, this generator adapts to your needs, providing relevant ideas for differentiation, assessment, and art history connections.</p>
-        </div>
-        <p class="copyright">&copy; 2025 unschooled.art</p>
-    </footer>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <script src="script.js"></script>
-</body>
-</html>
+                     <div class="form-group">
+                        <label>Differentiation & Accommodations</label>
+                        <p class="field-description">Select common accommodations and/or generate tailored ideas.</p>
+                        <div id="accommodationsChecklist" class="checklist-container">
+                            </div>
+                        <div class="ai-button-group">
+                            <button type="button" class="ai-button" id="supportAiButton">✨ Generate Support Ideas</button>
+                            <button type="button" class="ai-button" id="challengeAiButton">✨

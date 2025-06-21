@@ -27,17 +27,116 @@ const assessmentData = {
 };
 const studioHabits = ["Develop Craft", "Engage & Persist", "Envision", "Express", "Observe", "Reflect", "Stretch & Explore", "Understand Art Worlds"];
 
-// --- UTILITY & HELPER FUNCTIONS ---
 
-function getGeneralGradeLevel(specificGrade) {
-    const elementary = ["pre_k", "kindergarten", "1st", "2nd", "3rd", "4th", "5th"];
-    const middle = ["6th", "7th", "8th"];
-    const high = ["hs_proficient", "hs_accomplished", "hs_advanced"];
-    if (elementary.includes(specificGrade)) return "elementary";
-    if (middle.includes(specificGrade)) return "middle_school";
-    if (high.includes(specificGrade)) return "high_school";
-    return null;
+// --- MAIN EVENT LISTENER ---
+document.addEventListener('DOMContentLoaded', () => {
+    // Make openTab globally accessible
+    window.openTab = (event, tabName) => {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
+        document.querySelectorAll('.tab-link').forEach(link => link.classList.remove('active'));
+        document.getElementById(tabName).style.display = 'block';
+        event.currentTarget.classList.add('active');
+    };
+    document.querySelectorAll('.tab-link').forEach(link => {
+        link.addEventListener('click', (event) => {
+            const tabName = link.getAttribute('onclick').split("'")[1];
+            window.openTab(event, tabName);
+        });
+    });
+    document.querySelector('.tab-link').click(); // Set default tab
+    loadAllData(); // Start the application by loading all data
+});
+
+
+// --- DATA LOADING & PROCESSING ---
+
+function loadDataFromSheet(url) {
+    return new Promise((resolve, reject) => {
+        Papa.parse(url, {
+            download: true,
+            skipEmptyLines: true,
+            complete: (results) => {
+                const [headers, ...dataRows] = results.data;
+                const processed = dataRows.map(row => {
+                    let obj = {};
+                    headers.forEach((h, i) => {
+                        const key = h.trim(); // Use the exact header name
+                        const val = (row[i] || '').trim();
+                        // Special handling for columns that should be arrays
+                        if (key === 'grade_levels' || key === 'artistic_process') {
+                            obj[key] = val.split(',').map(x => x.trim());
+                        } else {
+                            obj[key] = val;
+                        }
+                    });
+                    return obj;
+                });
+                resolve(processed);
+            },
+            error: reject
+        });
+    });
 }
+
+async function loadAllData() {
+    try {
+        [allStandards, allEssentialQuestions, allAccommodations, allYouTubeChannels] = await Promise.all([
+            loadDataFromSheet(STANDARDS_URL),
+            loadDataFromSheet(QUESTIONS_URL),
+            loadDataFromSheet(ACCOMMODATIONS_URL),
+            loadDataFromSheet(YOUTUBE_URL)
+        ]);
+        initializeApp(); // Initialize the app AFTER all data is loaded
+    } catch (error) {
+        console.error("Error loading data:", error);
+        alert("Error loading data from the database: " + error.message);
+    }
+}
+
+
+// --- APP INITIALIZATION ---
+
+function initializeApp() {
+    // Populate dropdowns and checklists with both static and loaded data
+    populateDropdown('gradeLevelSelect', gradeLevels);
+    populateDropdown('disciplineSelect', disciplines);
+    populateDropdown('artisticProcessSelect', artisticProcesses);
+    populateChecklist('studioHabitsChecklist', studioHabits);
+    populateDropdown('assessmentType', assessmentData, true);
+    populateChecklist('accommodationsChecklist', allAccommodations.map(a => a.accommodation_text));
+
+    // Run initial filters to populate dynamic dropdowns
+    updateSpecificAssessments();
+    filterEssentialQuestions();
+    filterStandards();
+    
+    // Attach all event listeners to UI elements
+    attachEventListeners();
+}
+
+function attachEventListeners() {
+    document.getElementById('disciplineSelect').addEventListener('change', filterStandards);
+    document.getElementById('gradeLevelSelect').addEventListener('change', filterStandards);
+    document.getElementById('artisticProcessSelect').addEventListener('change', () => {
+        filterStandards();
+        filterEssentialQuestions();
+    });
+    document.getElementById('assessmentType').addEventListener('change', updateSpecificAssessments);
+    
+    const slider = document.getElementById('classSizeSlider');
+    const sliderValue = document.getElementById('classSizeValue');
+    if (slider && sliderValue) {
+        slider.addEventListener('input', (e) => sliderValue.textContent = e.target.value);
+    }
+
+    // Wire up all AI buttons to the handler function
+    document.querySelectorAll('.ai-button, .ai-button-inline').forEach(btn => {
+        btn.addEventListener('click', handleAiButtonClick);
+    });
+}
+
+
+// --- DYNAMIC UI FUNCTIONS (POPULATE & FILTER) ---
 
 function populateDropdown(id, options, isSpecial = false) {
     const select = document.getElementById(id);
@@ -73,8 +172,6 @@ function populateChecklist(id, items) {
         container.appendChild(label);
     });
 }
-
-// --- FILTERING FUNCTIONS ---
 
 function updateSpecificAssessments() {
     const type = document.getElementById('assessmentType').value;
@@ -120,38 +217,14 @@ function filterStandards() {
             }
         });
     } else {
-        dropdown.add(new Option("No standards match criteria.", ""));
-        dropdown.options[0].disabled = true;
+        const option = new Option("No standards match criteria.", "");
+        option.disabled = true;
+        dropdown.add(option);
     }
 }
 
+
 // --- AI FUNCTIONALITY ---
-
-function getAiPrompt(targetId) {
-    const form = document.getElementById('lessonPlanForm');
-    const lessonTitle = form.lessonTitle.value || 'a visual arts lesson';
-    const grade = form.gradeLevelSelect.options[form.gradeLevelSelect.selectedIndex].text;
-    const bigIdea = form.bigIdea.value;
-    const objectives = form.lessonObjectives.value;
-    const overview = form.lessonOverview.value;
-    
-    // Create a list of approved YouTube channels from our global array
-    const approvedChannels = allYouTubeChannels.map(c => c.channel_name).join(', ');
-
-    const prompts = {
-        essentialQuestionBank: `Generate 3-4 essential questions for a ${grade} art lesson titled "${lessonTitle}".`,
-        lessonOverview: `Write a lesson overview with a sequence of activities for a ${grade} art lesson titled "${lessonTitle}" about "${bigIdea}".`,
-        lessonObjectives: `Write 3-4 clear lesson objectives for a ${grade} art lesson titled "${lessonTitle}". Start each objective with "Students will be able to...".`,
-        lessonHook: `Generate a creative and engaging "lesson hook" or opener for a ${grade} art lesson about "${bigIdea}".`,
-        vocabularyTerms: `List 5-7 key vocabulary terms with simple, student-friendly definitions for an art lesson about "${bigIdea}". Format as TERM: Definition.`,
-        materialsList: `Based on the lesson overview "${overview}", generate a bulleted list of necessary art materials for a class of ${form.classSizeSlider.value} students.`,
-        studioHabitsChecklist: `Based on the lesson overview "${overview}", which 2-3 of the following Studio Habits of Mind are most relevant? List only the names, separated by commas: ${studioHabits.join(', ')}.`,
-        rubricCriteria: `Based on the lesson objectives "${objectives}", generate 3-4 specific rubric criteria for assessing student work at a proficient level.`,
-        artHistoryConnections: `For an art lesson on "${bigIdea}", suggest 3 relevant artists or art movements. For each, provide a one-sentence summary of the connection.`,
-        youtubeResources: `Suggest 3-4 age-appropriate videos for a ${grade} lesson on "${bigIdea}". IMPORTANT: Only suggest videos from the following specific YouTube channels: ${approvedChannels}.`
-    };
-    return prompts[targetId] || null;
-}
 
 async function handleAiButtonClick(event) {
     event.preventDefault();
@@ -206,97 +279,28 @@ async function handleAiButtonClick(event) {
     }
 }
 
-
-// --- DATA LOADING & APP INITIALIZATION ---
-
-function loadDataFromSheet(url) {
-    return new Promise((resolve, reject) => {
-        Papa.parse(url, {
-            download: true,
-            skipEmptyLines: true,
-            complete: (results) => {
-                const [headers, ...dataRows] = results.data;
-                const processed = dataRows.map(row => {
-                    let obj = {};
-                    headers.forEach((h, i) => {
-                        const key = h.trim();
-                        const val = (row[i] || '').trim();
-                        if (key === 'grade_levels' || key === 'artistic_process') {
-                            obj[key] = val.split(',').map(x => x.trim());
-                        } else {
-                            obj[key] = val;
-                        }
-                    });
-                    return obj;
-                });
-                resolve(processed);
-            },
-            error: reject
-        });
-    });
-}
-
-async function loadAllData() {
-    try {
-        [allStandards, allEssentialQuestions, allAccommodations, allYouTubeChannels] = await Promise.all([
-            loadDataFromSheet(STANDARDS_URL),
-            loadDataFromSheet(QUESTIONS_URL),
-            loadDataFromSheet(ACCOMMODATIONS_URL),
-            loadDataFromSheet(YOUTUBE_URL)
-        ]);
-        initializeApp();
-    } catch (error) {
-        console.error("Error loading data:", error);
-        alert("Error loading data from the database: " + error.message);
-    }
-}
-
-function initializeApp() {
-    populateDropdown('gradeLevelSelect', gradeLevels);
-    populateDropdown('disciplineSelect', disciplines);
-    populateDropdown('artisticProcessSelect', artisticProcesses);
-    populateChecklist('studioHabitsChecklist', studioHabits);
-    populateDropdown('assessmentType', assessmentData, true);
-    populateChecklist('accommodationsChecklist', allAccommodations.map(a => a.accommodation_text));
-    updateSpecificAssessments();
-    filterEssentialQuestions();
-    filterStandards();
+function getAiPrompt(targetId) {
+    const lessonTitle = document.getElementById('lessonTitle').value || 'a visual arts lesson';
+    const gradeSelect = document.getElementById('gradeLevelSelect');
+    const grade = gradeSelect.options[gradeSelect.selectedIndex].text;
+    const bigIdea = document.getElementById('bigIdea').value;
+    const objectives = document.getElementById('lessonObjectives').value;
+    const overview = document.getElementById('lessonOverview').value;
+    const classSize = document.getElementById('classSizeSlider').value;
     
-    // Attach Event Listeners
-    document.getElementById('disciplineSelect').addEventListener('change', filterStandards);
-    document.getElementById('gradeLevelSelect').addEventListener('change', filterStandards);
-    document.getElementById('artisticProcessSelect').addEventListener('change', () => {
-        filterStandards();
-        filterEssentialQuestions();
-    });
-    document.getElementById('assessmentType').addEventListener('change', updateSpecificAssessments);
-    
-    const slider = document.getElementById('classSizeSlider');
-    const sliderValue = document.getElementById('classSizeValue');
-    if (slider && sliderValue) {
-        slider.addEventListener('input', (e) => sliderValue.textContent = e.target.value);
-    }
+    const approvedChannels = allYouTubeChannels.map(c => c.channel_name).join(', ');
 
-    document.querySelectorAll('.ai-button, .ai-button-inline').forEach(btn => {
-        btn.addEventListener('click', handleAiButtonClick);
-    });
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    const tabLinks = document.querySelectorAll('.tab-link');
-    const tabContents = document.querySelectorAll('.tab-content');
-    window.openTab = (event, tabName) => {
-        tabContents.forEach(tab => tab.style.display = 'none');
-        tabLinks.forEach(link => link.classList.remove('active'));
-        document.getElementById(tabName).style.display = 'block';
-        event.currentTarget.classList.add('active');
+    const prompts = {
+        essentialQuestionBank: `Generate 3-4 essential questions for a ${grade} art lesson titled "${lessonTitle}".`,
+        lessonOverview: `Write a detailed lesson overview with a sequence of activities for a ${grade} art lesson titled "${lessonTitle}" about "${bigIdea}".`,
+        lessonObjectives: `Write 3-4 clear, measurable lesson objectives for a ${grade} art lesson titled "${lessonTitle}". Start each objective with "Students will be able to...".`,
+        lessonHook: `Generate a creative and engaging "lesson hook" or anticipatory set for a ${grade} art lesson about "${bigIdea}".`,
+        vocabularyTerms: `List 5-7 key vocabulary terms with simple, student-friendly definitions for an art lesson about "${bigIdea}". Format as TERM: Definition.`,
+        materialsList: `Based on the lesson overview "${overview}", generate a bulleted list of necessary art materials for a class of ${classSize} students.`,
+        studioHabitsChecklist: `Based on the lesson overview "${overview}", which 2-3 of the following Studio Habits of Mind are most relevant? List only the names, separated by commas: ${studioHabits.join(', ')}.`,
+        rubricCriteria: `Based on the lesson objectives "${objectives}", generate 3-4 specific rubric criteria for assessing student work at a proficient level.`,
+        artHistoryConnections: `For an art lesson on "${bigIdea}", suggest 3 relevant artists or art movements. For each, provide a one-sentence summary of the connection.`,
+        youtubeResources: `Suggest 3-4 age-appropriate videos for a ${grade} lesson on "${bigIdea}". IMPORTANT: Only suggest videos from the following specific YouTube channels: ${approvedChannels}.`
     };
-    tabLinks.forEach(link => {
-        link.addEventListener('click', (event) => {
-            const tabName = link.getAttribute('onclick').split("'")[1];
-            window.openTab(event, tabName);
-        });
-    });
-    document.querySelector('.tab-link').click();
-    loadAllData();
-});
+    return prompts[targetId] || null;
+}
