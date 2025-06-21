@@ -4,7 +4,7 @@ const fetch = require('node-fetch');
 
 exports.handler = async (event, context) => {
   try {
-    // 1. Read prompt from GET or POST
+    // 1. Grab the prompt from GET or POST
     let prompt = '';
     if (event.httpMethod === 'GET') {
       prompt = event.queryStringParameters?.prompt || '';
@@ -14,6 +14,7 @@ exports.handler = async (event, context) => {
       prompt = body.prompt || '';
     }
 
+    // 2. If no prompt was provided, bail out
     if (!prompt) {
       return {
         statusCode: 400,
@@ -24,31 +25,39 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // 2. Build the text-bison@002 endpoint URL
-    const apiUrl =
-      'https://generativelanguage.googleapis.com/v1beta2/models/text-bison@002:generateText'
+    // 3. Call the v1beta generateContent endpoint with the correct model name
+    const url =
+      'https://generativelanguage.googleapis.com/v1beta/models/text-bison@002:generateContent'
       + `?key=${process.env.GOOGLE_AI_API_KEY}`;
 
-    // 3. Call the PaLM 2 Text Bison model
-    const apiResponse = await fetch(apiUrl, {
+    const apiResponse = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        prompt: { text: prompt },
-        temperature: 0.7,
-        maxOutputTokens: 256
+        contents: [
+          {
+            parts: [{ text: prompt }]
+          }
+        ],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 256
+        }
       })
     });
 
     if (!apiResponse.ok) {
-      const errText = await apiResponse.text();
-      throw new Error(`Google API error: ${errText}`);
+      const errorText = await apiResponse.text();
+      throw new Error(`Google API error: ${errorText}`);
     }
 
     const data = await apiResponse.json();
-    const aiText = data.candidates?.[0]?.output || '';
+    const aiText =
+      data.candidates?.[0]?.content?.parts?.[0]?.text ||
+      data.candidates?.[0]?.output ||
+      '';
 
-    // 4. Return the generated text
+    // 4. Return the generated text to the client
     return {
       statusCode: 200,
       body: JSON.stringify({ text: aiText })
