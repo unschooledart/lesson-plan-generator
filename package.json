@@ -1,7 +1,0 @@
-{
-  "name": "lesson-plan-generator-functions",
-  "version": "1.0.0",
-  "dependencies": {
-    "@google/generative-ai": "^0.12.0"
-  }
-}
