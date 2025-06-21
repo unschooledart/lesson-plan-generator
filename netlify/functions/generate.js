@@ -4,7 +4,7 @@ const fetch = require('node-fetch');
 
 exports.handler = async (event) => {
   try {
-    // 1. Determine prompt from GET or POST
+    // 1. Read prompt from GET or POST
     let prompt = '';
     if (event.httpMethod === 'GET') {
       prompt = event.queryStringParameters?.prompt || '';
@@ -14,22 +14,23 @@ exports.handler = async (event) => {
       prompt = body.prompt || '';
     }
 
-    // 2. If still no prompt, return 400
+    // 2. Validate
     if (!prompt) {
       return {
         statusCode: 400,
         body: JSON.stringify({
-          error: 'Missing prompt. Use GET ?prompt=YOUR_TEXT or POST JSON {"prompt":"YOUR_TEXT"}.'
+          error:
+            'Missing prompt. Use GET ?prompt=YOUR_TEXT or POST JSON { "prompt": "YOUR_TEXT" }.'
         })
       };
     }
 
-    // 3. Call the Gemini REST endpoint (v1beta2 + generateText)
-    const apiUrl =
-      'https://generativelanguage.googleapis.com/v1beta2/models/text-bison@002:generateText'
+    // 3. Call the REST endpoint for text-bison-001
+    const url =
+      'https://generativelanguage.googleapis.com/v1beta2/models/text-bison-001:generateText'
       + `?key=${process.env.GOOGLE_AI_API_KEY}`;
 
-    const apiRes = await fetch(apiUrl, {
+    const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -39,15 +40,15 @@ exports.handler = async (event) => {
       })
     });
 
-    if (!apiRes.ok) {
-      const errTxt = await apiRes.text();
-      throw new Error(`Google API error: ${errTxt}`);
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Google API error: ${errText}`);
     }
 
-    const data = await apiRes.json();
-    const aiText = data.candidates?.[0]?.output || '';
+    const json = await res.json();
+    const aiText = json.candidates?.[0]?.output || '';
 
-    // 4. Return the AI text
+    // 4. Return result
     return {
       statusCode: 200,
       body: JSON.stringify({ text: aiText })
