@@ -1,17 +1,13 @@
 // Copyright 2025 unschooled.art
+// This file handles the frontend logic and calls our secure backend function.
 
-// --- Google Sheets CSV URLs ---
-const STANDARDS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQa_KVpvPbKTZgFqcrWqB04fXVEsS6Y0d7XzDzwA37DEGAW3qZ4rPwJbuRqNsAyRmX7c2kheEoGlRIJ/pub?gid=0&single=true&output=csv';
-const QUESTIONS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQa_KVpvPbKTZgFqcrWqB04fXVEsS6Y0d7XzDzwA37DEGAW3qZ4rPwJbuRqNsAyRmX7c2kheEoGlRIJ/pub?gid=1354885292&single=true&output=csv';
-const ACCOMMODATIONS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQa_KVpvPbKTZgFqcrWqB04fXVEsS6Y0d7XzDzwA37DEGAW3qZ4rPwJbuRqNsAyRmX7c2kheEoGlRIJ/pub?gid=421890709&single=true&output=csv';
-const YOUTUBE_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQa_KVpvPbKTZgFqcrWqB04fXVEsS6Y0d7XzDzwA37DEGAW3qZ4rPwJbuRqNsAyRmX7c2kheEoGlRIJ/pub?gid=2107013241&single=true&output=csv';
+// This script assumes `database.js` has been loaded and has populated the following arrays:
+// let allStandards = [];
+// let allEssentialQuestions = [];
+// let allAccommodations = [];
+// let allYouTubeChannels = [];
 
-// --- Global Data Arrays ---
-let allStandards = [];
-let allEssentialQuestions = [];
-let allAccommodations = [];
-let allYouTubeChannels = [];
-
+// --- Data for elements not from the database file ---
 const disciplines = { "visual_arts": "Visual Arts" };
 const artisticProcesses = { "creating": "Creating", "presenting": "Presenting", "responding": "Responding", "connecting": "Connecting" };
 const gradeLevels = {
@@ -26,17 +22,140 @@ const assessmentData = {
 };
 const studioHabits = ["Develop Craft", "Engage & Persist", "Envision", "Express", "Observe", "Reflect", "Stretch & Explore", "Understand Art Worlds"];
 
-// --- Utility Functions ---
-function getGeneralGradeLevel(specificGrade) {
-    const elementary = ["pre_k", "kindergarten", "1st", "2nd", "3rd", "4th", "5th"];
-    const middle = ["6th", "7th", "8th"];
-    const high = ["hs_proficient", "hs_accomplished", "hs_advanced"];
-    if (elementary.includes(specificGrade)) return "elementary";
-    if (middle.includes(specificGrade)) return "middle_school";
-    if (high.includes(specificGrade)) return "high_school";
-    return null;
+
+// --- AI PROMPT GENERATION ---
+function getAiPrompt(targetId) {
+    const form = document.getElementById('lessonPlanForm');
+    const lessonTitle = form.lessonTitle.value || 'a visual arts lesson';
+    const grade = form.gradeLevelSelect.options[form.gradeLevelSelect.selectedIndex].text;
+    const bigIdea = form.bigIdea.value;
+    const objectives = form.lessonObjectives.value;
+    const overview = form.lessonOverview.value;
+
+    const prompts = {
+        essentialQuestionBank: `Generate 3-4 essential questions for a ${grade} art lesson titled "${lessonTitle}".`,
+        lessonOverview: `Write a lesson overview with a sequence of activities for a ${grade} art lesson titled "${lessonTitle}" about "${bigIdea}".`,
+        lessonObjectives: `Write 3-4 clear lesson objectives for a ${grade} art lesson titled "${lessonTitle}". Start each objective with "Students will be able to...".`,
+        lessonHook: `Generate a creative and engaging "lesson hook" or opener for a ${grade} art lesson about "${bigIdea}".`,
+        vocabularyTerms: `List 5-7 key vocabulary terms with simple, student-friendly definitions for an art lesson about "${bigIdea}". Format as TERM: Definition.`,
+        materialsList: `Based on the lesson overview "${overview}", generate a bulleted list of necessary art materials for a class of ${form.classSizeSlider.value} students.`,
+        studioHabitsChecklist: `Based on the lesson overview "${overview}", which 2-3 of the following Studio Habits of Mind are most relevant? List only the names, separated by commas: ${studioHabits.join(', ')}.`,
+        rubricCriteria: `Based on the lesson objectives "${objectives}", generate 3-4 specific rubric criteria for assessing student work at a proficient level.`,
+        artHistoryConnections: `For an art lesson on "${bigIdea}", suggest 3 relevant artists or art movements. For each, provide a one-sentence summary of the connection.`,
+        youtubeResources: `Suggest 3-4 age-appropriate videos for a ${grade} lesson on "${bigIdea}". IMPORTANT: Only suggest videos from the following specific YouTube channels: Art for Kids Hub, The Art Assignment, Smarthistory, unschooled_art, Art with Mati & Dada, Art Insider, #Metkids, Ted-Ed, PBS Kids, Proko, Bob Ross.`
+    };
+    return prompts[targetId] || null;
 }
 
+async function handleAiButtonClick(event) {
+    event.preventDefault();
+    const button = event.currentTarget;
+    let formGroup = button.closest('.form-group');
+    if (!formGroup) return;
+
+    // For inline buttons, the target is the associated control in the same form group
+    let targetElement = formGroup.querySelector('select, textarea, .checklist-container');
+    if (!targetElement) return;
+
+    const targetId = targetElement.id;
+
+    const prompt = getAiPrompt(targetId);
+    if (!prompt) {
+        alert("Sorry, an AI prompt could not be generated for this feature.");
+        return;
+    }
+
+    button.disabled = true;
+    const originalButtonText = button.innerHTML;
+    button.textContent = 'Generating...';
+
+    try {
+        const response = await fetch('/.netlify/functions/generateAiContent', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `Server error: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        
+        if (targetId === 'studioHabitsChecklist') {
+            const habits = data.reply.split(',').map(h => h.trim());
+            document.querySelectorAll(`#${targetId} input[type="checkbox"]`).forEach(checkbox => {
+                checkbox.checked = habits.includes(checkbox.value);
+            });
+        } else {
+            targetElement.value = data.reply;
+        }
+
+    } catch (error) {
+        console.error("Error calling AI function:", error);
+        alert(`An error occurred: ${error.message}`);
+    } finally {
+        button.disabled = false;
+        button.innerHTML = originalButtonText;
+    }
+}
+
+
+// --- App Initialization and DOM Manipulation ---
+document.addEventListener('DOMContentLoaded', () => {
+    function initializeApp() {
+        populateDropdown('gradeLevelSelect', gradeLevels);
+        populateDropdown('disciplineSelect', disciplines);
+        populateDropdown('artisticProcessSelect', artisticProcesses);
+        populateChecklist('studioHabitsChecklist', studioHabits);
+        populateDropdown('assessmentType', assessmentData, true);
+        populateChecklist('accommodationsChecklist', allAccommodations.map(a => a.accommodation_text));
+        
+        updateSpecificAssessments();
+        filterEssentialQuestions();
+        filterStandards();
+
+        document.getElementById('disciplineSelect').addEventListener('change', filterStandards);
+        document.getElementById('gradeLevelSelect').addEventListener('change', filterStandards);
+        document.getElementById('artisticProcessSelect').addEventListener('change', () => {
+            filterStandards();
+            filterEssentialQuestions();
+        });
+        document.getElementById('assessmentType').addEventListener('change', updateSpecificAssessments);
+        
+        const slider = document.getElementById('classSizeSlider');
+        const sliderValue = document.getElementById('classSizeValue');
+        if (slider && sliderValue) {
+            slider.addEventListener('input', (e) => sliderValue.textContent = e.target.value);
+        }
+        
+        document.querySelectorAll('.ai-button, .ai-button-inline').forEach(btn => {
+            btn.addEventListener('click', handleAiButtonClick);
+        });
+    }
+    
+    // Make openTab globally accessible
+    window.openTab = (event, tabName) => {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
+        document.querySelectorAll('.tab-link').forEach(link => link.classList.remove('active'));
+        document.getElementById(tabName).style.display = 'block';
+        event.currentTarget.classList.add('active');
+    };
+
+    document.querySelectorAll('.tab-link').forEach(link => {
+        link.addEventListener('click', (event) => {
+            const tabName = link.getAttribute('onclick').split("'")[1];
+            window.openTab(event, tabName);
+        });
+    });
+
+    document.querySelector('.tab-link').click();
+    initializeApp();
+});
+
+
+// --- Helper Functions (assuming `database.js` provides the data arrays) ---
 function populateDropdown(id, options, isSpecial = false) {
     const select = document.getElementById(id);
     if (!select) return;
@@ -84,28 +203,16 @@ function filterEssentialQuestions() {
     questionsDropdown.innerHTML = '';
     const selectedProcess = document.getElementById('artisticProcessSelect').value;
     const filtered = allEssentialQuestions.filter(q =>
-        Array.isArray(q.artistic_process) && q.artistic_process.includes(selectedProcess)
+        q && Array.isArray(q.artistic_process) && q.artistic_process.includes(selectedProcess)
     );
     filtered.forEach(q => {
-        const option = document.createElement('option');
-        option.textContent = q.question;
-        option.value = q.question;
-        questionsDropdown.appendChild(option);
+        if(q.question) {
+            const option = document.createElement('option');
+            option.textContent = q.question;
+            option.value = q.question;
+            questionsDropdown.appendChild(option);
+        }
     });
-}
-
-function filterYouTubeChannels() {
-    const textarea = document.getElementById('youtubeResources');
-    if (!textarea) return;
-    const grade = document.getElementById('gradeLevelSelect').value;
-    const level = getGeneralGradeLevel(grade);
-    const matches = allYouTubeChannels.filter(channel =>
-        Array.isArray(channel.grade_levels) &&
-        (channel.grade_levels.includes(level) || channel.grade_levels.includes("all_levels"))
-    );
-    textarea.value = matches.length
-        ? matches.map(c => `• ${c.channel_name}: ${c.link}`).join("\n")
-        : "No matching channels found.";
 }
 
 function filterStandards() {
@@ -118,121 +225,25 @@ function filterStandards() {
     const process = document.getElementById('artisticProcessSelect').value;
 
     const filtered = allStandards.filter(s =>
-        s.discipline === discipline &&
+        s && s.discipline === discipline &&
         s.process === process &&
         Array.isArray(s.grade_levels) &&
         s.grade_levels.includes(grade)
     );
 
-    console.log("Matching standards:", filtered);
-
-    filtered.forEach(s => {
-        const code = s.anchor_std_code?.toUpperCase() || '[No Code]';
-        const text = s.text || '[No Description]';
-        const label = `${code} — ${text}`;
-        const option = document.createElement('option');
-        option.textContent = label;
-        option.value = text; // optionally store full description
-        dropdown.appendChild(option);
-    });
-}
-
-// --- App Initialization Function ---
-function initializeApp() {
-    populateDropdown('gradeLevelSelect', gradeLevels);
-    populateDropdown('disciplineSelect', disciplines);
-    populateDropdown('artisticProcessSelect', artisticProcesses);
-    populateChecklist('studioHabitsChecklist', studioHabits);
-    populateDropdown('assessmentType', assessmentData, true);
-    populateChecklist('accommodationsChecklist', allAccommodations.map(a => a.accommodation_text));
-    updateSpecificAssessments();
-    filterEssentialQuestions();
-    filterStandards();
-    filterYouTubeChannels();
-    document.getElementById('disciplineSelect').addEventListener('change', filterStandards);
-    document.getElementById('gradeLevelSelect').addEventListener('change', () => {
-        filterStandards();
-        filterYouTubeChannels();
-    });
-    document.getElementById('artisticProcessSelect').addEventListener('change', () => {
-        filterStandards();
-        filterEssentialQuestions();
-    });
-    document.getElementById('assessmentType').addEventListener('change', updateSpecificAssessments);
-    const slider = document.getElementById('classSizeSlider');
-    const sliderValue = document.getElementById('classSizeValue');
-    if (slider && sliderValue) {
-        slider.addEventListener('input', (e) => {
-            sliderValue.textContent = e.target.value;
+    if (filtered.length > 0) {
+        filtered.forEach(s => {
+            const code = s.anchor_std_code?.toUpperCase() || '[No Code]';
+            const text = s.text || '[No Description]';
+            const label = `${s.id} — ${text}`;
+            const option = document.createElement('option');
+            option.textContent = label;
+            option.value = s.id;
+            dropdown.appendChild(option);
         });
-    }
-    document.querySelectorAll('.ai-button, .ai-button-inline').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            alert("✨ This AI-powered feature is coming soon!");
-        });
-    });
-}
-
-// --- Sheet Loader ---
-function loadDataFromSheet(url) {
-    return new Promise((resolve, reject) => {
-        Papa.parse(url, {
-            download: true,
-            skipEmptyLines: true,
-            complete: (results) => {
-                const [headers, ...dataRows] = results.data;
-                const processed = dataRows.map(row => {
-                    let obj = {};
-                    headers.forEach((h, i) => {
-                        const key = h.trim().toLowerCase();
-                        const val = (row[i] || '').trim();
-                        if (key === 'grade_levels' || key === 'artistic_process') {
-                            obj[key] = val.toLowerCase().split(',').map(x => x.trim());
-                        } else {
-                            obj[key] = val.toLowerCase();
-                        }
-                    });
-                    return obj;
-                });
-                resolve(processed);
-            },
-            error: reject
-        });
-    });
-}
-
-async function loadAllData() {
-    try {
-        [allStandards, allEssentialQuestions, allAccommodations, allYouTubeChannels] = await Promise.all([
-            loadDataFromSheet(STANDARDS_URL),
-            loadDataFromSheet(QUESTIONS_URL),
-            loadDataFromSheet(ACCOMMODATIONS_URL),
-            loadDataFromSheet(YOUTUBE_URL)
-        ]);
-        initializeApp();
-    } catch (error) {
-        console.error("Error loading data:", error);
-        alert("Error loading data: " + error.message);
+    } else {
+        const option = new Option("No standards match criteria.", "");
+        option.disabled = true;
+        dropdown.add(option);
     }
 }
-
-// --- DOM Ready ---
-document.addEventListener('DOMContentLoaded', () => {
-    const tabLinks = document.querySelectorAll('.tab-link');
-    const tabContents = document.querySelectorAll('.tab-content');
-    window.openTab = (event, tabName) => {
-        tabContents.forEach(tab => tab.style.display = 'none');
-        tabLinks.forEach(link => link.classList.remove('active'));
-        document.getElementById(tabName).style.display = 'block';
-        event.currentTarget.classList.add('active');
-    };
-    tabLinks.forEach(link => {
-        link.addEventListener('click', (event) => {
-            const tabName = link.getAttribute('onclick').split("'")[1];
-            window.openTab(event, tabName);
-        });
-    });
-    document.querySelector('.tab-link').click();
-    loadAllData();
-});
