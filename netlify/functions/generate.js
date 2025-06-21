@@ -4,9 +4,8 @@ const fetch = require('node-fetch');
 
 exports.handler = async (event, context) => {
   try {
-    // 1. Determine prompt (GET or POST)
+    // 1. Read prompt from GET or POST
     let prompt = '';
-
     if (event.httpMethod === 'GET') {
       prompt = event.queryStringParameters?.prompt || '';
     } else if (event.httpMethod === 'POST') {
@@ -25,12 +24,12 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // 2. Build URL with API key query parameter
-    const apiUrl = 
-      'https://generativelanguage.googleapis.com/v1beta2/models/text-bison-001:generateText'
+    // 2. Build the text-bison@002 endpoint URL
+    const apiUrl =
+      'https://generativelanguage.googleapis.com/v1beta2/models/text-bison@002:generateText'
       + `?key=${process.env.GOOGLE_AI_API_KEY}`;
 
-    // 3. Call Google Generative Language API
+    // 3. Call the PaLM 2 Text Bison model
     const apiResponse = await fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
