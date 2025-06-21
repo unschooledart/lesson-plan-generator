@@ -1,0 +1,348 @@
+/* Copyright 2025 unschooled.art */
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Text&family=Lato:wght@400;700&display=swap');
+
+/* --- General Body & Layout --- */
+:root {
+    --background-color: #f0f2f5;
+    --card-background: #ffffff;
+    --text-color: #333;
+    --header-color: #000000;
+    --header-text: #ecf0f1;
+    --accent-color: #3498db;
+    --border-color: #dee2e6;
+    --font-body: 'Lato', Arial, sans-serif;
+    --font-header: 'DM Serif Text', serif;
+}
+
+body {
+    font-family: var(--font-body);
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+main {
+    flex-grow: 1;
+    padding: 1rem;
+    width: 100%;
+}
+
+.generator-container {
+    max-width: 900px;
+    margin: 20px auto;
+    background-color: var(--card-background);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+
+/* --- Header & Footer --- */
+header, footer {
+    background-color: var(--header-color);
+    color: var(--header-text);
+    padding: 1.5rem 1rem;
+    text-align: center;
+}
+
+header h1 {
+    font-family: var(--font-header);
+    margin: 0;
+    font-size: 2.5em;
+    font-weight: 400;
+}
+
+header p {
+    margin-top: 0.5rem;
+    margin-bottom: 0;
+    color: #ccc;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+footer {
+    padding: 2rem 1rem;
+    margin-top: 2rem;
+}
+
+.footer-content h2 {
+    font-family: var(--font-header);
+    font-weight: 400;
+    font-size: 1.5em;
+    margin-bottom: 1rem;
+}
+
+.footer-content p {
+    color: #ccc;
+    max-width: 800px;
+    margin: 0 auto 1rem auto;
+}
+
+.copyright {
+    font-size: 0.8em;
+    color: #888;
+    margin-top: 2rem;
+}
+
+/* --- Navigation Bar --- */
+nav {
+  max-width: 1200px;
+  width: 90%;
+  margin: 20px auto 0 auto;
+  background-color: var(--header-color);
+  border-radius: 12px;
+  padding: 8px 0;
+}
+
+nav ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  font-family: var(--font-body);
+  text-transform: uppercase;
+}
+
+nav a {
+  display: block;
+  color: white;
+  padding: 8px 10px;
+  text-decoration: none;
+  font-size: 0.9em;
+}
+
+nav a:hover {
+  text-decoration: underline;
+}
+
+/* --- Tabbed Interface --- */
+.tab-links {
+    display: flex;
+    flex-wrap: wrap;
+    background-color: #e9ecef;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.tab-link {
+    background-color: inherit;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 16px;
+    transition: background-color 0.3s;
+    font-family: var(--font-body);
+    font-weight: 700;
+    color: #495057;
+    flex-grow: 1;
+    text-align: center;
+}
+
+.tab-link:hover {
+    background-color: #dee2e6;
+}
+
+.tab-link.active {
+    background-color: var(--card-background);
+    color: var(--header-color);
+    border-bottom: 3px solid var(--accent-color);
+}
+
+.tab-content {
+    padding: 2rem;
+    border-top: none;
+}
+
+.tab-content h2 {
+    font-family: var(--font-header);
+    font-weight: 400;
+    margin-top: 0;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 1.5rem;
+}
+
+/* --- Form Elements --- */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.form-group .field-description {
+    font-size: 0.9em;
+    color: #6c757d;
+    margin-top: -0.25rem;
+    margin-bottom: 0.5rem;
+}
+
+input[type="text"],
+select,
+textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+
+textarea {
+    resize: vertical;
+}
+
+select[multiple] {
+    min-height: 150px;
+}
+
+.checklist-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.checklist-item {
+    display: flex;
+    align-items: center;
+}
+
+/* --- AI & Action Buttons --- */
+.ai-button-inline {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9em;
+    color: var(--accent-color);
+    font-weight: 700;
+}
+.ai-button-inline:hover {
+    text-decoration: underline;
+}
+
+.ai-button-group {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.ai-button {
+    flex-grow: 1;
+    background-color: #f8f9fa;
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 0.75rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.ai-button:hover {
+    background-color: #e9ecef;
+}
+
+/* --- Main Generate & Output --- */
+.output-section {
+    padding: 2rem;
+    text-align: center;
+}
+.button-main {
+    padding: 1rem 3rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--header-text);
+    background-color: var(--header-color);
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
+}
+.button-main:hover {
+    background-color: #333;
+    transform: translateY(-2px);
+}
+#lessonPlanOutput {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    border: 1px dashed var(--border-color);
+    border-radius: 8px;
+    text-align: left;
+    display: none; /* Initially hidden */
+}
+#actionButtons {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+#actionButtons button {
+     background-color: #6c757d;
+     padding: 0.8rem 1.5rem;
+     border-radius: 8px;
+     color: white;
+     border: none;
+     cursor: pointer;
+}
+#actionButtons button:hover {
+    background-color: #5a6268;
+}
+
+/* --- Slider --- */
+.slider-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+input[type="range"] {
+    flex-grow: 1;
+    height: 8px;
+    background: #ddd;
+    outline: none;
+    border-radius: 4px;
+}
+
+/* --- Utility --- */
+.hidden {
+    display: none;
+}
+
+/* --- Responsive Design --- */
+@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    .form-group.full-width {
+        grid-column: 1; /* Reset for single column */
+    }
+    .tab-links {
+        flex-direction: column;
+    }
+}
